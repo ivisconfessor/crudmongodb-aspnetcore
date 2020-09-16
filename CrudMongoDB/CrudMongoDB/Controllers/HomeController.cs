@@ -81,8 +81,28 @@ namespace CrudMongoDB.Controllers
             return books;
         }
 
-        public IActionResult UpdateBook()
+        public IActionResult UpdateBook(Book updated, string bookId)
         {
+            // Conexão Servidor
+            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+
+            // Conexão/Criação Base de Dados
+            var database = client.GetDatabase("crudmongodb");
+
+            // Criando Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
+            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
+
+            // Filtro para Buscar apenas o Livro que está sendo atualizado
+            var filter = Builders<Book>.Filter.Eq(b => b.Id, ObjectId.Parse(bookId));
+
+            // Populando Atualização 
+            var bookUpdate = Builders<Book>.Update
+                .Set(b => b.YearPublish, updated.YearPublish)
+                .Set(b => b.Description, updated.Description);
+
+            // Efetivar Atualização do Livro
+            booksCollection.UpdateOne(filter, bookUpdate);
+
             TempData["Sucesso"] = "Livro Atualizado com Sucesso!";
             return RedirectToAction("Index");
         } 
