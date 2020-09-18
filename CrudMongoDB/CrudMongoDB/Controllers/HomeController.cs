@@ -37,7 +37,7 @@ namespace CrudMongoDB.Controllers
                 // Conexão/Criação Base de Dados
                 var database = client.GetDatabase("crudmongodb");
 
-                // Criando Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
+                // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
                 IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
 
                 var filter = Builders<Book>.Filter.Where(b=>b.Id == ObjectId.Parse(bookId));
@@ -55,7 +55,7 @@ namespace CrudMongoDB.Controllers
             // Conexão/Criação Base de Dados
             var database = client.GetDatabase("crudmongodb");
 
-            // Criando Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
+            // Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
             IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
 
             booksCollection.InsertOne(book);
@@ -72,7 +72,7 @@ namespace CrudMongoDB.Controllers
             // Conexão/Criação Base de Dados
             var database = client.GetDatabase("crudmongodb");
 
-            // Criando Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
+            // Coleção Books, onde está salvo a Lista de Livros (A Coleção em como se fosse uma tabela em um Banco Relacional)
             IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
 
             var filter = Builders<Book>.Filter.Empty;
@@ -89,7 +89,7 @@ namespace CrudMongoDB.Controllers
             // Conexão/Criação Base de Dados
             var database = client.GetDatabase("crudmongodb");
 
-            // Criando Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
+            // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
             IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
 
             // Filtro para Buscar apenas o Livro que está sendo atualizado
@@ -107,8 +107,22 @@ namespace CrudMongoDB.Controllers
             return RedirectToAction("Index");
         } 
 
-        public IActionResult DeleteBook()
+        public IActionResult DeleteBook(string bookId)
         {
+            // Conexão Servidor
+            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+
+            // Conexão/Criação Base de Dados
+            var database = client.GetDatabase("crudmongodb");
+
+            // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
+            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
+
+            // Filtro para excluir apenas o Livro que contém o id passando em parâmetro
+            var filter = Builders<Book>.Filter.Where(b => b.Id == ObjectId.Parse(bookId));
+
+            booksCollection.DeleteOne(filter);
+
             TempData["Sucesso"] = "Livro Deletado com Sucesso!";
             return RedirectToAction("Index");
         }
