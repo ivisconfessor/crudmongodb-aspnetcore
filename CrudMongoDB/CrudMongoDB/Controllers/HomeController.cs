@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using CrudMongoDB.Models;
 using MongoDB.Driver;
 using MongoDB.Bson;
+using CrudMongoDB.MongoDAO;
 
 namespace CrudMongoDB.Controllers
 {
@@ -31,15 +32,10 @@ namespace CrudMongoDB.Controllers
                 return View();
             else
             {
-                // Conexão Servidor
-                var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+                // Obter Coleção Books - Coleção que contém os Livros Cadastrados (A Coleção é como se fosse uma tabela em um Banco de Dados Relacional)
+                var booksCollection = BookDAO.Instance.GetBooksCollectionDAO();
 
-                // Conexão/Criação Base de Dados
-                var database = client.GetDatabase("crudmongodb");
-
-                // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
-                IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
-
+                // Filtrar por Id o Livro que será carregado para Edição
                 var filter = Builders<Book>.Filter.Where(b=>b.Id == ObjectId.Parse(bookId));
                 var book = booksCollection.Find<Book>(filter).First();
 
@@ -49,87 +45,49 @@ namespace CrudMongoDB.Controllers
 
         public IActionResult InsertBook(Book book)
         {
-            // Conexão Servidor
-            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+            // Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco de Dados Relacional)
+            var booksCollection = BookDAO.Instance.GetBooksCollectionDAO();
 
-            // Conexão/Criação Base de Dados
-            var database = client.GetDatabase("crudmongodb");
+            // Inserir Livro na Coleção Books
+            BookDAO.Instance.InsertBookDAO(booksCollection, book);
 
-            // Coleção Books, onde será salvo os dados do Livro (A Coleção em como se fosse uma tabela em um Banco Relacional)
-            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
-
-            booksCollection.InsertOne(book);
-
-            TempData["Sucesso"] = "Livro Cadastrado!";
+            TempData["Sucesso"] = "Livro Cadastrado com Sucesso!";
             return RedirectToAction("Index");
         }
 
         public List<Book> ListBooks()
         {
-            // Conexão Servidor
-            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+            // Obter Coleção Books - Coleção que contém os Livros Cadastrados (A Coleção é como se fosse uma tabela em um Banco de Dados Relacional)
+            var booksCollection = BookDAO.Instance.GetBooksCollectionDAO();
 
-            // Conexão/Criação Base de Dados
-            var database = client.GetDatabase("crudmongodb");
-
-            // Coleção Books, onde está salvo a Lista de Livros (A Coleção em como se fosse uma tabela em um Banco Relacional)
-            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
-
-            var filter = Builders<Book>.Filter.Empty;
-            var books = booksCollection.Find<Book>(filter).ToList();
+            // Listar todos os Livros Cadastrados
+            var books = BookDAO.Instance.ListBooksDAO(booksCollection);
 
             return books;
         }
 
         public IActionResult UpdateBook(Book updated, string bookId)
         {
-            // Conexão Servidor
-            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+            // Obter Coleção Books - Coleção que contém os Livros Cadastrados (A Coleção é como se fosse uma tabela em um Banco de Dados Relacional)
+            var booksCollection = BookDAO.Instance.GetBooksCollectionDAO();
 
-            // Conexão/Criação Base de Dados
-            var database = client.GetDatabase("crudmongodb");
-
-            // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
-            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
-
-            // Filtro para Buscar apenas o Livro que está sendo atualizado
-            var filter = Builders<Book>.Filter.Eq(b => b.Id, ObjectId.Parse(bookId));
-
-            // Populando Atualização 
-            var bookUpdate = Builders<Book>.Update
-                .Set(b => b.YearPublish, updated.YearPublish)
-                .Set(b => b.Description, updated.Description);
-
-            // Efetivar Atualização do Livro
-            booksCollection.UpdateOne(filter, bookUpdate);
-
+            // Atualizar Livro na Coleção Books de acordo com o Id passado em parâmetro
+            BookDAO.Instance.UpdateBookDAO(booksCollection, updated, bookId);
+            
             TempData["Sucesso"] = "Livro Atualizado com Sucesso!";
             return RedirectToAction("Index");
         } 
 
         public IActionResult DeleteBook(string bookId)
         {
-            // Conexão Servidor
-            var client = new MongoClient("mongodb+srv://crudmongodb:crudmongodb@server01.5qo3v.mongodb.net/crudmongodb?retryWrites=true&w=majority");
+            // Obter Coleção Books - Coleção que contém os Livros Cadastrados (A Coleção é como se fosse uma tabela em um Banco Relacional)
+            var booksCollection = BookDAO.Instance.GetBooksCollectionDAO();
 
-            // Conexão/Criação Base de Dados
-            var database = client.GetDatabase("crudmongodb");
-
-            // Coleção Books (A Coleção em como se fosse uma tabela em um Banco Relacional)
-            IMongoCollection<Book> booksCollection = database.GetCollection<Book>("Books");
-
-            // Filtro para excluir apenas o Livro que contém o id passando em parâmetro
-            var filter = Builders<Book>.Filter.Where(b => b.Id == ObjectId.Parse(bookId));
-
-            booksCollection.DeleteOne(filter);
+            // Deleta Livro na Coleção Books de acordo com o Id passado em parâmetro
+            BookDAO.Instance.DeleteBookDAO(booksCollection, bookId);
 
             TempData["Sucesso"] = "Livro Deletado com Sucesso!";
             return RedirectToAction("Index");
-        }
-
-        public IActionResult Privacy()
-        {
-            return View();
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
